@@ -1,0 +1,159 @@
+#+TITLE: Random Exploration
+#+AUTHOR: Ashley Gillman
+#+EMAIL: ashley.gillman@csiro.au
+#+OPTIONS: ^:{}
+#+HTML_LINK_HOME: /
+#+HTML_LINK_UP: ..
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/dreampulse/computer-modern-web-font/master/fonts.css">
+
+* Setup                                                            :noexport:
+#+BEGIN_SRC nix :tangle default.nix
+  let
+    pkgs = import /home/ash/repo/nixpkgs {};
+  in
+  { stdenv ? pkgs.stdenv, pythonPackages ? pkgs.python34Packages }:
+
+  stdenv.mkDerivation {
+    name = "python-nix";
+    version = "0.1.0.0";
+    #src = ./.;
+    buildInputs = [ pythonPackages.python
+                    pythonPackages.scipy
+                    pythonPackages.numpy
+                    pythonPackages.matplotlib ];
+  }
+#+END_SRC
+
+* Directory listing
+#+BEGIN_SRC python :results output raw replace :exports results
+  from pathlib import Path
+  link_format = '- [[file:{0}][={0}=]]'.format
+  print(*(link_format(p.name + ('/' if p.is_dir() else ''))
+          for p in sorted(Path('.').iterdir())
+          if not p.name.startswith(('.', '#'))),
+        sep='\n')
+#+END_SRC
+
+#+RESULTS:
+- [[file:area_results.png][=area_results.png=]]
+- [[file:index.html][=index.html=]]
+- [[file:index.org][=index.org=]]
+- [[file:index.org_imgs/][=index.org_imgs/=]]
+
+* Aim
+To determine the expected time it would take to "explore" a given
+percentage of a digital area or volume if pixels or voxels are chosen,
+with replacement, at random. For example, if we have a 7\times7\times7 grid, how
+long, on average, would it take to sample 70% of the volume if voxels
+are chosen completely at random?
+
+* Methodology and Results
+The following simple function will run our experiment. It takes a
+number of elements (pixels or voxels), and a desired percentage
+required to be seen. It then randomly samples the space until that
+percentage has been filled, and returns the number of samples
+required, $n$.
+
+#+NAME: simulate
+#+BEGIN_SRC python :exports code
+  def simulate(n_elements, percentage):
+      n = 0
+      elements_seen = [0] * n_elements
+      while sum(elements_seen) < percentage * n_elements:
+         element_idx = random.randrange(n_elements)
+         elements_seen[element_idx] = 1
+         n += 1
+      return n
+#+END_SRC
+
+Let's see how this scales with a 2D area.
+
+#+BEGIN_SRC python :exports both :results file :noweb yes
+  import random
+  import statistics
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as plt
+
+  plt.figure(figsize=(9, 3))
+
+  <<simulate>>
+
+  n_tests = 500
+  max_side_l = 10
+  for percent in [0.25, 0.5, 0.75, 1]:
+      x = range(1, max_side_l+1)
+      y = []
+      for side in x:
+          n = statistics.mean(simulate(side*side, percent)
+                              for i in range(n_tests))
+          y.append(n)
+      plt.plot(x, y, label=str(percent * 100) + '%')
+
+  plt.legend(title='Percentage searched', loc='upper left')
+  plt.title('Area random sampling')
+  plt.xlabel('Side length (pixels)')
+  plt.ylabel('Average required samples')
+  plt.yscale("log", nonposx='clip')
+  fig_file = 'area_results.png'
+  plt.savefig(fig_file, dpi=300, bbox_inches='tight')
+  return fig_file
+#+END_SRC
+
+#+RESULTS:
+[[file:area_results.png]]
+
+And with a 3D volume.
+
+
+#+BEGIN_SRC python :exports both :results file :noweb yes
+  import random
+  import statistics
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as plt
+
+  plt.figure(figsize=(9, 3))
+
+  <<simulate>>
+
+  n_tests = 50
+  max_side_l = 10
+  for percent in [0.25, 0.5, 0.75, 1]:
+      x = range(1, max_side_l+1)
+      y = []
+      for side in x:
+          n = statistics.mean(simulate(side*side*side, percent)
+                              for i in range(n_tests))
+          y.append(n)
+      plt.plot(x, y, label=str(percent * 100) + '%')
+
+  plt.legend(title='Percentage searched', loc='upper left')
+  plt.title('Volume random sampling')
+  plt.xlabel('Side length (pixels)')
+  plt.ylabel('Average required samples')
+  plt.yscale("log", nonposx='clip')
+  fig_file = 'volume_results.png'
+  plt.savefig(fig_file, dpi=300, bbox_inches='tight')
+  return fig_file
+#+END_SRC
+
+#+RESULTS:
+[[file:volume_results.png]]
+
+* Local Variables                                                 :noexport:
+Local Variables:
+org-export-babel-evaluate       : nil
+org-confirm-babel-evaluate      : nil
+org-html-link-org-files-as-html : nil
+org-html-postamble-format       : '( \
+  ("en" " <p class=\"author\"  >Author: %a (%e)</p>\n \
+          <p class=\"date\"    >Date: %T</p>\n \
+          <p class=\"creator\" >%c</p>\n \
+          <p                   ><a href=\"/\">Home</a></p>"))
+org-babel-python-command        : "\
+  /home/ash/.nix-profile/bin/nix-shell \
+    --pure \
+    --command python3"
+End:

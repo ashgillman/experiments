@@ -1,0 +1,51 @@
+h1, h2, h3, h4, h5, h6, body {
+    font-family: "Computer Modern Serif", serif;
+}
+#content,#postamble {
+    margin: 50px auto;
+    max-width: 700px;
+}
+.title {
+    padding: 20px 0;
+}
+div.org-src-container {
+    margin: 0 auto;
+    width: 600px;
+}
+div.org-src-container pre.src {
+    //background-color: #333;
+    background-color: #1C2228;
+    color: white;
+    margin: 1.2em 0;
+}
+pre.example {
+    margin: 1.2em 50px;
+}
+div.figure p img {
+    width: 600px;
+}
+table {
+    margin: 0 auto;
+}
+table img {
+    width: 300px;
+    height: 300px;
+}
+pre.src-python:before {
+    content: 'python3';
+}
+pre.src-octave:before {
+    content: 'octave';
+}
+pre.src:before {
+    color: black;
+}
+.full-width {
+    position: relative;
+    width: 90vw !important;
+    left: calc(-45vw + 50%);
+}
+.long-code div pre.src {
+    max-height: 500px;
+    overflow-y: auto;
+}

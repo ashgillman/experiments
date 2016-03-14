@@ -1,0 +1,53 @@
+#+TITLE:
+#+AUTHOR: Ashley Gillman
+#+EMAIL: ashley.gillman@csiro.au
+#+OPTIONS: ^:{}
+#+HTML_LINK_HOME: /
+#+HTML_LINK_UP: ..
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="/style.css">
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/dreampulse/computer-modern-web-font/master/fonts.css">
+
+* Setup                                                            :noexport:
+#+BEGIN_SRC nix :tangle default.nix
+  let
+    pkgs = import /home/ash/repo/nixpkgs {};
+  in
+  { stdenv ? pkgs.stdenv, pythonPackages ? pkgs.python34Packages }:
+
+  stdenv.mkDerivation {
+    name = "python-nix";
+    buildInputs = [ pythonPackages.python
+                    pythonPackages.scipy
+                    pythonPackages.numpy
+                    pythonPackages.matplotlib ];
+  }
+#+END_SRC
+
+* Directory listing
+#+BEGIN_SRC python :results output raw replace :exports results
+  from pathlib import Path
+  link_format = '- [[file:{0}][={0}=]]'.format
+  print(*(link_format(p.name + ('/' if p.is_dir() else ''))
+          for p in sorted(Path('.').iterdir())
+          if not p.name.startswith(('.', '#'))),
+        sep='\n')
+#+END_SRC
+
+* Aim
+* Methodology
+
+* Local Variables                                                 :noexport:
+Local Variables:
+org-export-babel-evaluate       : nil
+org-confirm-babel-evaluate      : nil
+org-html-link-org-files-as-html : nil
+org-html-postamble-format       : '( \
+  ("en" " <p class=\"author\"  >Author: %a (%e)</p>\n \
+          <p class=\"date\"    >Date: %T</p>\n \
+          <p class=\"creator\" >%c</p>\n \
+          <p                   ><a href=\"/\">Home</a></p>"))
+org-babel-python-command        : "\
+  /home/ash/.nix-profile/bin/nix-shell \
+    --pure \
+    --command python3"
+End:
